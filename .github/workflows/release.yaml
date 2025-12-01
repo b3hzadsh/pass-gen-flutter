@@ -19,7 +19,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # needed for proper versioning if you use git tags in app
+          fetch-depth: 0  # needed for proper versioning if you use git tags in app
 
       # ------------------------------------------------------------------
       # 1. Java + Flutter setup
@@ -52,23 +52,17 @@ jobs:
             ${{ runner.os }}-flutter-pub-
 
       # ------------------------------------------------------------------
-      # 3. Install Android SDK + NDK upfront (prevents random cancelations)
+      # 3. Install Android SDK (فقط SDK را نصب می‌کنیم، NDK توسط Gradle مدیریت می‌شود)
       # ------------------------------------------------------------------
-      - name: Install Android SDK & NDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            platforms;android-34
-            build-tools;34.0.0
-            ndk;27.0.12077973
-            accept-licenses: true
-
-      # Optional: cache the huge NDK between runs (saves 5–10 min)
-      - name: Cache NDK
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.ANDROID_HOME }}/ndk/27.0.12077973
-          key: ndk-27.0.12077973-${{ runner.os }}
+      # - name: Install Android SDK
+      #   uses: android-actions/setup-android@v3
+      #   with:
+      #     packages: |
+      #       platforms;android-34
+      #       build-tools;34.0.0
+      #       accept-licenses: true
+            
+      # **توجه:** مراحل مربوط به نصب و کش NDK (27.0.12077973) حذف شدند.
 
       # ------------------------------------------------------------------
       # 4. Create .env file from secrets
@@ -167,6 +161,7 @@ jobs:
           artifacts: "release-assets/*"
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
+
 
       # - name: Upload to Cafe Bazaar
       #   uses: matinzd/cafebazaar-release@v1
