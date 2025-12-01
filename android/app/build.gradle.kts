@@ -17,7 +17,6 @@ dependencies {
     // ← Update these lines to use 5.2.0
     testImplementation("org.mockito:mockito-inline:5.2.0")
     testImplementation("org.mockito:mockito-core:5.2.0")  // if not already present
-    implementation("com.google.android.material:material:1.13.0")
 
     // If your tests use Kotlin (recommended for local_auth)
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.0")
