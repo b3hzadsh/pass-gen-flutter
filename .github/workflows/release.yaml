@@ -5,18 +5,24 @@ on:
     tags:
       - 'v*.*.*'
   workflow_dispatch:
-  
+
 permissions:
   contents: write
+  packages: write
 
 jobs:
   build-android:
     runs-on: ubuntu-latest
-    
     strategy:
       matrix:
-        build-type: [apk, appbundle]
-    
+        include:
+          - build-type: apk
+            artifact-name: apk-files
+            output-path: build/app/outputs/flutter-apk/
+          - build-type: appbundle
+            artifact-name: app-bundle
+            output-path: build/app/outputs/bundle/release/
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,14 +30,14 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.35.6'
-          channel: 'stable'
+          flutter-version: 3.24.3
+          channel: stable
 
       - name: Create .env
         run: |
@@ -43,14 +49,8 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Verify Flutter installation
-        run: flutter doctor -v
-
-      # Optional: uncomment to ensure no test fails before release
-      # - name: Run tests
-      #   run: flutter test --no-pub
-
-      - name: Decode and create keystore
+      - name: Decode Keystore
+        if: matrix.build-type == 'appbundle'  # فقط برای AAB نیازه
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -66,64 +66,73 @@ jobs:
           storeFile=key.jks
           EOF
 
-
-
       - name: Build APK (split per ABI)
         if: matrix.build-type == 'apk'
         run: flutter build apk --release --split-per-abi
-      
+
       - name: Build App Bundle
         if: matrix.build-type == 'appbundle'
         run: flutter build appbundle --release
 
-      - name: List build outputs
-        run: find build/app/outputs -name "*.apk" -o -name "*.aab" | sort
-          
-      - name: Upload APK artifacts
-        if: matrix.build-type == 'apk'
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: apk-files
-          path: build/app/outputs/flutter-apk/*.apk
-          retention-days: 30
-
-      - name: Upload AAB artifacts
-        if: matrix.build-type == 'appbundle'
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-bundle
-          path: build/app/outputs/bundle/release/*.aab
+          name: ${{ matrix.artifact-name }}
+          path: ${{ matrix.output-path }}
           retention-days: 30
 
   create-release:
     needs: build-android
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    
+    if: startsWith(github.ref, 'refs/tags/v')
+
     steps:
-      - name: Download all artifacts
+      - name: Download APK artifacts
         uses: actions/download-artifact@v4
-        
-      - name: List downloaded files
-        run: find . -name "*.apk" -o -name "*.aab" | sort
-        
+        with:
+          name: apk-files
+          path: apk-artifacts
+
+      - name: Download AAB artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: app-bundle
+          path: aab-artifacts
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release-assets
+          cp apk-artifacts/* release-assets/ 2>/dev/null || true
+          cp aab-artifacts/* release-assets/ 2>/dev/null || true
+          ls -la release-assets/
+
       - name: Create GitHub Release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          name: "Release ${{ github.ref_name }}"
+          name: "رمزمن ${{ github.ref_name }}"
           body: |
-            🚀 Flutter App Release  
-            **Downloads:**  
-            - [Universal APK](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/app-arm64-v8a-release.apk)
-            - [App Bundle (AAB)](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/app-release.aab)
-          artifacts: "**/*.apk,**/*.aab"
+            رمزمن منتشر شد!
+
+            دانلود برای اندروید:
+            • فایل AAB (برای گوگل پلی و مایکت)
+            • APKهای جدا شده برای ABIهای مختلف (arm64-v8a, armeabi-v7a, x86_64)
+
+            تغییرات نسخه:
+            - بهبود عملکرد
+            - رفع باگ های جزئی
+            - اضافه شدن ویژگی جدید
+          artifacts: "release-assets/*"
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cafe Bazaar Release
+      - name: Upload to Cafe Bazaar
         uses: matinzd/cafebazaar-release@v1
         with:
           cafebazaar-pishkhaan-api-secret: ${{ secrets.CAFEBAZAAR_API_SECRET }}
-          # app_file: optional, مسیر APK یا AAB
+          app_file: release-assets/app-release.aab
           auto_publish: true
-          changelog_fa: "نسخهٔ جدید با بهبود X, Y, Z"
+          changelog_fa: |
+            نسخه ${{ github.ref_name }}
+            • بهبود امنیت لاگین
+            • بهینه‌سازی همگام‌سازی
+            • رفع باگ‌های گزارش‌شده
