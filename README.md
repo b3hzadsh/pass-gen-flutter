@@ -1,7 +1,7 @@
 # قفل بان (PassForge)
 
 <div align="center">
-  <img src="assets/icon/app_icon.png" width="120" alt="قفل بان"/>
+  <img src="assets/images/icon.png" width="120" alt="قفل بان"/>
   <h1>قفل بان</h1>
   <p>یک رمز اصلی → هزاران رمز قوی و متفاوت<br>۱۰۰٪ آفلاین • ورود با اثر انگشت • بدون ارسال رمز به سرور</p>
 
