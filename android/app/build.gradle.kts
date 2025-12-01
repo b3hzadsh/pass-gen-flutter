@@ -4,9 +4,17 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+dependencies {
+    // ← Update these lines to use 5.2.0
+    testImplementation("org.mockito:mockito-inline:5.2.0")
+    testImplementation("org.mockito:mockito-core:5.2.0")  // if not already present
 
+    // If your tests use Kotlin (recommended for local_auth)
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.0")
+    testImplementation("org.jetbrains.kotlin:kotlin-test")  // if not already present
+}
 android {
-    namespace = "com.example.pass_generator"
+    namespace = "com.bsh.khm.co.passgen"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -21,7 +29,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.pass_generator"
+        applicationId = "com.bsh.khm.co.passgen"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

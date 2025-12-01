@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
-import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 
 const String _upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -23,40 +21,24 @@ class PasswordOptions {
     this.useSpecial = true,
   });
 
-  String buildCharset() {
-    String chars = '';
-    if (useUpper) chars += _upper;
-    if (useLower) chars += _lower;
-    if (useNumbers) chars += _numbers;
-    if (useSpecial) chars += _special;
-    return chars;
+  /// تعداد دسته‌های انتخاب شده را برمی‌گرداند
+  int get selectedCategoriesCount {
+    int count = 0;
+    if (useUpper) count++;
+    if (useLower) count++;
+    if (useNumbers) count++;
+    if (useSpecial) count++;
+    return count;
   }
 
-  List<String> getGuaranteedChars(List<int> hashBytes) {
-    List<String> guaranteed = [];
-    int byteIndex = 0;
-
-    if (useUpper) {
-      guaranteed.add(
-        _upper[_getCharIndex(hashBytes, byteIndex++, _upper.length)],
-      );
-    }
-    if (useLower) {
-      guaranteed.add(
-        _lower[_getCharIndex(hashBytes, byteIndex++, _lower.length)],
-      );
-    }
-    if (useNumbers) {
-      guaranteed.add(
-        _numbers[_getCharIndex(hashBytes, byteIndex++, _numbers.length)],
-      );
-    }
-    if (useSpecial) {
-      guaranteed.add(
-        _special[_getCharIndex(hashBytes, byteIndex++, _special.length)],
-      );
-    }
-    return guaranteed;
+  /// ساخت رشته کاراکترهای مجاز با StringBuffer (بهینه‌تر)
+  String buildCharset() {
+    final buffer = StringBuffer();
+    if (useUpper) buffer.write(_upper);
+    if (useLower) buffer.write(_lower);
+    if (useNumbers) buffer.write(_numbers);
+    if (useSpecial) buffer.write(_special);
+    return buffer.toString();
   }
 }
 
@@ -65,45 +47,69 @@ String generateDerivedCode(
   String serviceName,
   PasswordOptions options,
 ) {
-  var keyBytes = utf8.encode(masterSecret);
-  var messageBytes = utf8.encode(serviceName);
-  var hmacSha256 = Hmac(sha256, keyBytes);
-  var digest = hmacSha256.convert(messageBytes);
-  List<int> hashBytes = digest.bytes;
-
-  String allChars = options.buildCharset();
+  final allChars = options.buildCharset();
   if (allChars.isEmpty) {
-    throw Exception('No character sets selected');
+    throw Exception('حداقل یک نوع کاراکتر باید انتخاب شود.');
+  }
+  if (options.length < options.selectedCategoriesCount) {
+    // اختیاری: می‌توانید خطا دهید یا اجازه دهید کد کارش را بکند (که باعث حذف برخی شروط می‌شود)
+    // throw Exception('طول رمز کمتر از تعداد دسته‌های انتخاب شده است.');
   }
 
-  List<String> guaranteedChars = options.getGuaranteedChars(hashBytes);
+  final keyBytes = utf8.encode(masterSecret);
+  final messageBytes = utf8.encode(serviceName);
+  final hmac = Hmac(sha256, keyBytes);
+  final digest = hmac.convert(messageBytes);
+  final hashBytes = digest.bytes; // این آرایه ۳۲ بایتی است
 
-  List<String> passwordChars = [];
+  final List<String> passwordChars = [];
+  int byteIndex = 0;
 
-  passwordChars.addAll(guaranteedChars);
+  if (options.useUpper) {
+    passwordChars.add(_pickChar(_upper, hashBytes, byteIndex++));
+  }
+  if (options.useLower) {
+    passwordChars.add(_pickChar(_lower, hashBytes, byteIndex++));
+  }
+  if (options.useNumbers) {
+    passwordChars.add(_pickChar(_numbers, hashBytes, byteIndex++));
+  }
+  if (options.useSpecial) {
+    passwordChars.add(_pickChar(_special, hashBytes, byteIndex++));
+  }
 
-  int byteIndex = guaranteedChars.length;
   while (passwordChars.length < options.length) {
-    passwordChars.add(
-      allChars[_getCharIndex(hashBytes, byteIndex++, allChars.length)],
-    );
+    passwordChars.add(_pickChar(allChars, hashBytes, byteIndex++));
   }
 
-  var random = Random(_bytesToInt(hashBytes.sublist(16, 24)));
-  passwordChars.shuffle(random);
+  _deterministicShuffle(passwordChars, hashBytes, byteIndex);
 
   if (passwordChars.length > options.length) {
-    passwordChars = passwordChars.sublist(0, options.length);
+    return passwordChars.sublist(0, options.length).join('');
   }
 
   return passwordChars.join('');
 }
 
-int _getCharIndex(List<int> hashBytes, int byteIndex, int setLength) {
-  return hashBytes[byteIndex % hashBytes.length] % setLength;
+String _pickChar(String source, List<int> hashBytes, int index) {
+  final byte = hashBytes[index % hashBytes.length];
+  return source[byte % source.length];
 }
 
-int _bytesToInt(List<int> bytes) {
-  var data = ByteData.sublistView(Uint8List.fromList(bytes));
-  return data.getInt64(0);
+void _deterministicShuffle(List<String> list, List<int> hashBytes, int seedIndex) {
+  for (int i = list.length - 1; i > 0; i--) {
+    final byte = hashBytes[seedIndex % hashBytes.length];
+    seedIndex++;
+    
+    final j = byte % (i + 1);
+    final temp = list[i];
+    list[i] = list[j];
+    list[j] = temp;
+  }
+}
+
+String hashString(String text) {
+  final bytes = utf8.encode(text);
+  final digest = sha256.convert(bytes);
+  return digest.toString();
 }

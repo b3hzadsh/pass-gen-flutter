@@ -1,4 +1,4 @@
-package com.example.pass_generator
+package com.bsh.khm.co.passgen
 
 import io.flutter.embedding.android.FlutterFragmentActivity // ✅ این خط را جایگزین کنید
 

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:local_auth/local_auth.dart';
 
 class BiometricService {
@@ -16,7 +17,9 @@ class BiometricService {
         biometricOnly: false,
       );
     } catch (e) {
-      print(e);
+      if (kDebugMode) {
+        print(e);
+      }
       return false;
     }
   }

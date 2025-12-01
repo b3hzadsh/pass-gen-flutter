@@ -17,37 +17,63 @@ class AuthCheckScreen extends StatefulWidget {
 class _AuthCheckScreenState extends State<AuthCheckScreen> {
   final _storage = StorageService();
   final _bioService = BiometricService();
+  bool _isAuthFailed = false;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _checkStatus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkStatus();
+    });
   }
 
-  void _checkStatus() async {
-    if (await _storage.hasMasterSecret()) {
-      _authenticateAndNavigate();
-    } else {
-      _navigateToSetup();
+  Future<void> _checkStatus() async {
+    try {
+      final hasSecret = await _storage.hasMasterSecret();
+      if (!mounted) return;
+      if (hasSecret) {
+        await _authenticateAndNavigate();
+      } else {
+        _navigateToSetup();
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+        _isAuthFailed = true;
+      });
     }
   }
 
-  void _authenticateAndNavigate() async {
+  Future<void> _authenticateAndNavigate() async {
+    setState(() {
+      _isLoading = true;
+      _isAuthFailed = false;
+    });
+
     final isAuthenticated = await _bioService.authenticate(
-      'برای دسترسی به برنامه احراز هویت کنید',
+      'برای دسترسی به رمزها، هویت خود را تایید کنید',
     );
 
-    if (mounted && isAuthenticated) {
+    if (!mounted) return;
+
+    if (isAuthenticated) {
       final secret = await _storage.getMasterSecret();
-      if (secret != null) {
+
+      if (secret != null && mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => PasswordGeneratorPage(masterSecret: secret),
           ),
         );
+      } else {
+        _navigateToSetup();
       }
     } else {
-      print("Authentication Failed");
+      setState(() {
+        _isLoading = false;
+        _isAuthFailed = true;
+      });
     }
   }
 
@@ -61,6 +87,32 @@ class _AuthCheckScreenState extends State<AuthCheckScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.lock_person_rounded, size: 80, color: Colors.blue),
+            const SizedBox(height: 24),
+            if (_isLoading) ...[
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              const Text('در حال بررسی امنیتی...'),
+            ] else if (_isAuthFailed) ...[
+              const Text(
+                'احراز هویت انجام نشد',
+                style: TextStyle(color: Colors.red, fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: _authenticateAndNavigate,
+                icon: const Icon(Icons.fingerprint),
+                label: const Text('تلاش مجدد'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }
