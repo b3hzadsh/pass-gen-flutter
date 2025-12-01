@@ -33,6 +33,13 @@ jobs:
           flutter-version: '3.35.6'
           channel: 'stable'
 
+      - name: Create .env
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env.local
+          echo "WEB_CLIENT_ID=${{ secrets.WEB_CLIENT_ID }}" >> .env.local
+          echo "ANDROID_CLIENT_ID=${{ secrets.ANDROID_CLIENT_ID }}" >> .env.local
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env.local
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -59,12 +66,7 @@ jobs:
           storeFile=key.jks
           EOF
 
-      - name: Create .env
-        run: |
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env.local
-          echo "WEB_CLIENT_ID=${{ secrets.WEB_CLIENT_ID }}" >> .env.local
-          echo "ANDROID_CLIENT_ID=${{ secrets.ANDROID_CLIENT_ID }}" >> .env.local
-          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env.local
+
 
       - name: Build APK (split per ABI)
         if: matrix.build-type == 'apk'
