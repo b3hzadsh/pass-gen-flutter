@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - 'v*.*.*'
-  workflow_dispatch:  # Allow manual run
+  workflow_dispatch:
   
 permissions:
   contents: write
@@ -119,3 +119,11 @@ jobs:
             - [App Bundle (AAB)](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/app-release.aab)
           artifacts: "**/*.apk,**/*.aab"
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cafe Bazaar Release
+        uses: matinzd/cafebazaar-release@v1
+        with:
+          cafebazaar-pishkhaan-api-secret: ${{ secrets.CAFEBAZAAR_API_SECRET }}
+          # app_file: optional, مسیر APK یا AAB
+          auto_publish: true
+          changelog_fa: "نسخهٔ جدید با بهبود X, Y, Z"
