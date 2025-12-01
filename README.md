@@ -31,7 +31,7 @@
 ## دانلود
 
 - کافه‌بازار: در حال بررسی  
-- دانلود مستقیم: [آخرین نسخه](https://github.com/username/ramzman/releases/latest)
+- دانلود مستقیم: [آخرین نسخه](https://github.com/b3hzadsh/pass-gen-flutter/releases/latest)
 
 ## توسعه‌دهنده
 
