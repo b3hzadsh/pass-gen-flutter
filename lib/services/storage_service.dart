@@ -12,6 +12,17 @@ class StorageService {
 
   static const _masterKey = 'master_secret';
   static const _hashedMasterKey = 'hashed_master_secret';
+  Future<void> deleteMasterSecret() async {
+    await _storage.delete(key: _masterKey);
+  }
+
+  Future<void> clearAll() async {
+    try {
+      await _storage.deleteAll();
+    } catch (e) {
+      debugPrint('Error clearing storage: $e');
+    }
+  }
 
   Future<void> saveMasterSecret(String secret) async {
     try {
@@ -53,19 +64,5 @@ class StorageService {
 
   Future<bool> hasHashedMasterSecret() async {
     return await _storage.containsKey(key: _hashedMasterKey);
-  }
-
-  // todo impl logout and use this
-  Future<void> clearAll() async {
-    try {
-      await _storage.deleteAll();
-    } catch (e) {
-      debugPrint('Error clearing storage: $e');
-    }
-  }
-
-  // یا پاک کردن تکی
-  Future<void> deleteMasterSecret() async {
-    await _storage.delete(key: _masterKey);
   }
 }

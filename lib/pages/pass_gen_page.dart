@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pass_generator/models/vault_item.dart' show VaultItem;
+import 'package:pass_generator/pages/login_page.dart' show LoginPage;
 import 'package:pass_generator/repository/vault_repository.dart'
     show VaultRepository;
 import 'package:pass_generator/services/hash_gen.dart';
+import 'package:pass_generator/services/storage_service.dart'
+    show StorageService;
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 class PasswordProfile {
   final String id;
@@ -302,6 +306,43 @@ class _PasswordGeneratorPageState extends State<PasswordGeneratorPage> {
     ).showSnackBar(const SnackBar(content: Text('کپی شد!')));
   }
 
+  Future<void> _handleLogout() async {
+    // ۱. نمایش دیالوگ تایید
+    final bool? shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('خروج از حساب'),
+        content: const Text(
+          'آیا مطمئن هستید که می‌خواهید خارج شوید؟\nبا خروج از حساب، رمز اصلی از حافظه موقت پاک می‌شود.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('انصراف'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('خروج'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLogout != true) return;
+    final storage = StorageService();
+    await storage.deleteMasterSecret();
+
+    await Supabase.instance.client.auth.signOut();
+
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+        (route) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -314,6 +355,15 @@ class _PasswordGeneratorPageState extends State<PasswordGeneratorPage> {
             tooltip: 'رمز جدید',
             onPressed: _clearForm,
           ),
+          IconButton(
+            icon: const Icon(
+              Icons.logout,
+              color: Colors.redAccent,
+            ), // رنگ قرمز برای تمایز
+            tooltip: 'خروج از حساب',
+            onPressed: _handleLogout,
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       endDrawer: Drawer(

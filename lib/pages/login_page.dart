@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:pass_generator/pages/setup_secret_page.dart' show SetupSecretPage;
 import 'package:pass_generator/repository/user_text_repository.dart';
 import 'package:pass_generator/services/storage_service.dart';
 import 'package:pass_generator/services/supabase_service.dart';
@@ -18,11 +19,13 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await SupabaseService.instance.nativeGoogleSignIn();
+
       if (!mounted) return;
+
       final storage = StorageService();
       UserTextRepository repo = UserTextRepository();
-
       final userText = await repo.getMyText();
+
       if (userText != null) {
         await storage.saveHashedMasterSecret(userText.hashedMasterSecret);
       }
@@ -30,21 +33,19 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('ورود با موفقیت انجام شد'),
+            content: Text('ورود موفقیت آمیز بود'),
             backgroundColor: Colors.green,
           ),
         );
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const SetupSecretPage()),
+        );
       }
-    } catch (e) {
-      debugPrint("Login Error: $e");
-
+    } catch (error) {
+      debugPrint("Login Error: $error");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('خطا: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
+          SnackBar(content: Text('خطا: $error'), backgroundColor: Colors.red),
         );
       }
     } finally {
