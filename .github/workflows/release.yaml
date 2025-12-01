@@ -50,7 +50,7 @@ jobs:
         run: flutter pub get
 
       - name: Decode Keystore
-        if: matrix.build-type == 'appbundle'  # فقط برای AAB نیازه
+        if: matrix.build-type == 'appbundle'
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
