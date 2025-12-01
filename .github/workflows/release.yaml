@@ -52,19 +52,6 @@ jobs:
             ${{ runner.os }}-flutter-pub-
 
       # ------------------------------------------------------------------
-      # 3. Install Android SDK (فقط SDK را نصب می‌کنیم، NDK توسط Gradle مدیریت می‌شود)
-      # ------------------------------------------------------------------
-      # - name: Install Android SDK
-      #   uses: android-actions/setup-android@v3
-      #   with:
-      #     packages: |
-      #       platforms;android-34
-      #       build-tools;34.0.0
-      #       accept-licenses: true
-            
-      # **توجه:** مراحل مربوط به نصب و کش NDK (27.0.12077973) حذف شدند.
-
-      # ------------------------------------------------------------------
       # 4. Create .env file from secrets
       # ------------------------------------------------------------------
       - name: Create .env file
@@ -82,20 +69,20 @@ jobs:
       # ------------------------------------------------------------------
       # 5. Decode signing keystore (only for AAB)
       # ------------------------------------------------------------------
-      - name: Decode Android keystore
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+      - name: Decode and create keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/key.jks
+          mkdir -p android/app
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/key.jks
           cat <<EOF > android/key.properties
           storePassword=$KEYSTORE_PASSWORD
           keyPassword=$KEY_PASSWORD
           keyAlias=$KEY_ALIAS
-          storeFile=../app/key.jks
+          storeFile=key.jks
           EOF
 
       # ------------------------------------------------------------------
