@@ -25,7 +25,7 @@ dependencies {
 android {
     namespace = "com.bsh.khm.co.passgen"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = null
+    // ndkVersion = null
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
