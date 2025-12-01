@@ -1,29 +1,32 @@
 import 'dart:convert';
-import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart' as enc;
+import 'dart:typed_data';
 
 class CryptoService {
-  // تبدیل Master Secret به کلید ۳۲ بایتی و IV ۱۶ بایتی
-  static enc.Key _deriveKey(String masterSecret) {
-    // از هش SHA256 رمز اصلی به عنوان کلید استفاده می‌کنیم
+  // این متد دقیقا معادل deriveKeyAndIV در جاوااسکریپت است
+  static List<dynamic> _deriveKeyAndIV(String masterSecret) {
+    // ۱. هش SHA256 از رمز اصلی
     final bytes = utf8.encode(masterSecret);
     final digest = sha256.convert(bytes);
-    return enc.Key(Uint8List.fromList(digest.bytes));
-  }
 
-  static enc.IV _deriveIV(String masterSecret) {
-    // از ۱۶ بایت اول هش به عنوان IV استفاده می‌کنیم (برای قطعی بودن)
-    final bytes = utf8.encode(masterSecret);
-    final digest = sha256.convert(bytes);
-    return enc.IV(Uint8List.fromList(digest.bytes.sublist(0, 16)));
+    // ۲. کلید = ۳۲ بایت کامل هش
+    final key = enc.Key(Uint8List.fromList(digest.bytes));
+
+    // ۳. آی‌وی = ۱۶ بایت اول هش
+    final iv = enc.IV(Uint8List.fromList(digest.bytes.sublist(0, 16)));
+
+    return [key, iv];
   }
 
   static String encryptData(Map<String, dynamic> data, String masterSecret) {
-    final key = _deriveKey(masterSecret);
-    final iv = _deriveIV(masterSecret);
+    final params = _deriveKeyAndIV(masterSecret);
+    final key = params[0] as enc.Key;
+    final iv = params[1] as enc.IV;
 
-    final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
+    final encrypter = enc.Encrypter(
+      enc.AES(key, mode: enc.AESMode.cbc, padding: 'PKCS7'),
+    );
 
     final jsonString = jsonEncode(data);
     final encrypted = encrypter.encrypt(jsonString, iv: iv);
@@ -36,15 +39,18 @@ class CryptoService {
     String masterSecret,
   ) {
     try {
-      final key = _deriveKey(masterSecret);
-      final iv = _deriveIV(masterSecret);
+      final params = _deriveKeyAndIV(masterSecret);
+      final key = params[0] as enc.Key;
+      final iv = params[1] as enc.IV;
 
-      final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
+      final encrypter = enc.Encrypter(
+        enc.AES(key, mode: enc.AESMode.cbc, padding: 'PKCS7'),
+      );
 
       final decrypted = encrypter.decrypt64(encryptedBase64, iv: iv);
       return jsonDecode(decrypted) as Map<String, dynamic>;
     } catch (e) {
-      print("Decryption failed: $e");
+      // اگر رمز اشتباه باشد یا فرمت نخواند
       return null;
     }
   }

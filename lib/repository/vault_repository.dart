@@ -53,7 +53,7 @@ class VaultRepository {
   }
 
   Future<void> saveItem({
-    required String? id, // اگر نال باشد یعنی جدید، اگر باشد یعنی ادیت
+    required String? id,
     required String masterSecret,
     required String serviceName,
     String? username,
@@ -73,18 +73,37 @@ class VaultRepository {
 
     final encrypted = CryptoService.encryptData(dataMap, masterSecret);
 
-    if (id != null) {
-      // Update
-      await _supabase
-          .from('vault_items')
-          .update({'encrypted_data': encrypted})
-          .eq('id', id);
-    } else {
-      // Insert
-      await _supabase.from('vault_items').insert({
-        'user_id': userId,
-        'encrypted_data': encrypted,
-      });
+    try {
+      if (id != null) {
+        // --- UPDATE ---
+        await _supabase
+            .from('vault_items')
+            .update({'encrypted_data': encrypted})
+            .eq('id', id);
+      } else {
+        // --- INSERT ---
+        await _supabase.from('vault_items').insert({
+          'user_id': userId,
+          'encrypted_data': encrypted,
+        });
+      }
+    } on PostgrestException catch (error) {
+      // *** مدیریت خطاهای خاص دیتابیس ***
+
+      // ۱. ارور محدودیت تعداد آیتم (RLS Policy)
+      if (error.code == '42501') {
+        throw '⛔️ شما به سقف تعداد مجاز سرویس‌ها (30 عدد) رسیده‌اید.';
+      }
+
+      // ۲. ارور محدودیت آپدیت روزانه (Trigger Function)
+      if (error.message.contains('Daily update limit')) {
+        throw '⏳ سقف ویرایش روزانه شما پر شده است. لطفاً فردا تلاش کنید.';
+      }
+
+      // سایر خطاها
+      throw 'خطای دیتابیس: ${error.message}';
+    } catch (e) {
+      throw 'یک خطای غیرمنتظره رخ داد: $e';
     }
   }
 
