@@ -35,10 +35,10 @@ jobs:
 
       - name: Create .env
         run: |
-          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env.local
-          echo "WEB_CLIENT_ID=${{ secrets.WEB_CLIENT_ID }}" >> .env.local
-          echo "ANDROID_CLIENT_ID=${{ secrets.ANDROID_CLIENT_ID }}" >> .env.local
-          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env.local
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "WEB_CLIENT_ID=${{ secrets.WEB_CLIENT_ID }}" >> .env
+          echo "ANDROID_CLIENT_ID=${{ secrets.ANDROID_CLIENT_ID }}" >> .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
 
       - name: Get dependencies
         run: flutter pub get
