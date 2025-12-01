@@ -110,9 +110,9 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          name: "رمزمن ${{ github.ref_name }}"
+          name: "قفل بان ${{ github.ref_name }}"
           body: |
-            رمزمن منتشر شد!
+            قفل بان منتشر شد!
 
             دانلود برای اندروید:
             • فایل AAB (برای گوگل پلی و مایکت)
@@ -125,14 +125,14 @@ jobs:
           artifacts: "release-assets/*"
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload to Cafe Bazaar
-        uses: matinzd/cafebazaar-release@v1
-        with:
-          cafebazaar-pishkhaan-api-secret: ${{ secrets.CAFEBAZAAR_API_SECRET }}
-          app_file: release-assets/app-release.aab
-          auto_publish: true
-          changelog_fa: |
-            نسخه ${{ github.ref_name }}
-            • بهبود امنیت لاگین
-            • بهینه‌سازی همگام‌سازی
-            • رفع باگ‌های گزارش‌شده
+      # - name: Upload to Cafe Bazaar
+      #   uses: matinzd/cafebazaar-release@v1
+      #   with:
+      #     cafebazaar-pishkhaan-api-secret: ${{ secrets.CAFEBAZAAR_API_SECRET }}
+      #     app_file: release-assets/app-release.aab
+      #     auto_publish: true
+      #     changelog_fa: |
+      #       نسخه ${{ github.ref_name }}
+      #       • بهبود امنیت لاگین
+      #       • بهینه سازی همگام سازی
+      #       • رفع باگ های گزارش شده
