@@ -11,7 +11,6 @@ class SupabaseService {
   static SupabaseService get instance => _instance;
   final SupabaseClient _client = Supabase.instance.client;
   SupabaseClient get client => _client;
-  // حذف رمز اصلی
 
 
   Future<List<Map<String, dynamic>>> getAll(String table) async {
@@ -90,7 +89,7 @@ class SupabaseService {
     final GoogleSignIn signIn = GoogleSignIn.instance;
 
     await signIn.initialize(
-      clientId: androidClientId,
+      // clientId: androidClientId, don't need this line, it find it with pakcage name and stuff
       serverClientId: webClientId,
     );
 
