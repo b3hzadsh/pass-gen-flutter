@@ -19,7 +19,7 @@ class SupabaseService {
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
       debugPrint('Error fetching data from $table: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -42,7 +42,7 @@ class SupabaseService {
       await _client.from(table).insert(data);
     } catch (e) {
       debugPrint('Error inserting into $table: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -51,7 +51,7 @@ class SupabaseService {
       await _client.from(table).update(data).eq('id', id);
     } catch (e) {
       debugPrint('Error updating row $id in $table: $e');
-      throw e;
+      rethrow;
     }
   }
 
@@ -60,7 +60,7 @@ class SupabaseService {
       await _client.from(table).delete().eq('id', id);
     } catch (e) {
       debugPrint('Error deleting row $id from $table: $e');
-      throw e;
+      rethrow;
     }
   }
 
