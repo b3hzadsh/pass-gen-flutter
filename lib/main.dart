@@ -1,11 +1,14 @@
 import 'dart:async' show StreamSubscription;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart' show dotenv;
+import 'package:pass_generator/bloc/generate_password/generate_password_bloc.dart';
 import 'package:pass_generator/pages/login_page.dart';
 import 'package:pass_generator/providers/secret_provider.dart'
     show SecretProvider;
-import 'package:provider/provider.dart' show ChangeNotifierProvider;
+import 'package:provider/provider.dart'
+    show ChangeNotifierProvider, MultiProvider, Provider;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:pass_generator/pages/auth_check_page.dart' show AuthCheckScreen;
@@ -22,8 +25,15 @@ Future<void> main() async {
   );
 
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => SecretProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => SecretProvider()),
+        // BlocProvider(create: (context) => PassGenBloc()),
+        Provider<PassGenBloc>(
+          create: (_) => PassGenBloc(),
+          // dispose: (_, bloc) => bloc.dispose(),
+        ),
+      ],
       child: const MyApp(),
     ),
   );
